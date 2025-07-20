@@ -7,36 +7,54 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- 🎲 Weighted Mutation List
+-- 🧬 Editable Mutation Chances (as a dictionary)
 local mutationChances = {
-    {name = "Shiny", chance = 0.15},
-    {name = "Inverted", chance = 0.15},
-    {name = "Windy", chance = 0.15},
-    {name = "Frozen", chance = 0.1},
-    {name = "Golden", chance = 0.1},
-    {name = "Tiny", chance = 0.1},
-    {name = "Tranquil", chance = 0.08},
-    {name = "IronSkin", chance = 0.08},
-    {name = "Radiant", chance = 0.06},
-    {name = "Ascended", chance = 0.01},
-    {name = "Mega", chance = 0.01},
-    {name = "Shocked", chance = 0.01},
-    {name = "Rainbow", chance = 0.01},
+    Shiny = 0.40,
+    Inverted = 0.40,
+    Windy = 0.40,
+    Frozen = 0.40,
+    Golden = 0.40,
+    Tiny = 0.1,
+    Tranquil = 0.08,
+    IronSkin = 0.08,
+    Radiant = 0.06,
+    Ascended = 0.25,
+    Mega = 0.25,
+    Shocked = 0.01,
+    Rainbow = 0.01,
 }
 
+-- 🎯 Weighted Mutation Roller
 local function rollWeightedMutation()
-    local roll = math.random()
-    local sum = 0
-    for _, mut in ipairs(mutationChances) do
-        sum += mut.chance
-        if roll <= sum then
-            return mut.name
+    local totalChance = 0
+    for _, chance in pairs(mutationChances) do
+        totalChance += chance
+    end
+
+    local roll = math.random() * totalChance
+    local cumulative = 0
+    for mutation, chance in pairs(mutationChances) do
+        cumulative += chance
+        if roll <= cumulative then
+            return mutation
         end
     end
-    return mutationChances[#mutationChances].name
+
+    -- fallback
+    for name in pairs(mutationChances) do return name end
 end
 
--- 📡 Initial State
+-- 🛠️ Helper to change any mutation chance dynamically
+local function updateMutationChance(mutationName, newChance)
+    if mutationChances[mutationName] then
+        mutationChances[mutationName] = newChance
+        print("Updated " .. mutationName .. " chance to " .. newChance)
+    else
+        warn("Mutation not found: " .. mutationName)
+    end
+end
+
+-- 🌟 Mutation & ESP State
 local currentMutation = rollWeightedMutation()
 local mutationPart = nil
 local billboardGui = nil
@@ -44,7 +62,7 @@ local espLabel = nil
 local espEnabled = true
 local hue = 0
 
--- 🔍 Mutation ESP
+-- 🔍 Mutation ESP Setup
 local function createOrUpdateESP()
     if not mutationPart then return end
 
@@ -74,7 +92,7 @@ local function createOrUpdateESP()
     espLabel.Parent = billboardGui
 end
 
--- 🌈 RGB Animation
+-- 🌈 RGB Animation for ESP label
 RunService.RenderStepped:Connect(function()
     if espEnabled and espLabel then
         hue = (hue + 0.005) % 1
@@ -82,7 +100,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- 🔎 Find mutation machine
+-- 🔎 Find mutation machine part
 for _, obj in ipairs(Workspace:GetDescendants()) do
     if obj:IsA("Model") and string.find(string.lower(obj.Name), "mutation") then
         local mainPart = obj:FindFirstChildWhichIsA("BasePart")
@@ -108,7 +126,6 @@ mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 mainFrame.Active = true
 mainFrame.Draggable = true
 mainFrame.Parent = screenGui
-
 Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
 
 local title = Instance.new("TextLabel", mainFrame)
@@ -142,7 +159,7 @@ toggleBtn.Font = Enum.Font.GothamBold
 toggleBtn.TextSize = 18
 Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(1, 0)
 
--- 💠 Roll Mutation Button without cooldown
+-- 💠 Roll Mutation Button
 local rollBtn = Instance.new("TextButton", mainFrame)
 rollBtn.Size = UDim2.new(1, -40, 0, 45)
 rollBtn.Position = UDim2.new(0, 20, 0, 130)
@@ -167,7 +184,7 @@ local function animateRerollForFiveSeconds()
 
     local startTime = tick()
     while tick() - startTime < 5 do
-        local randomName = mutationChances[math.random(#mutationChances)].name
+        local randomName = rollWeightedMutation()
         if espLabel then
             espLabel.Text = "Mutation: " .. randomName
         end
@@ -179,7 +196,6 @@ local function animateRerollForFiveSeconds()
         espLabel.Text = "Mutation: " .. currentMutation
     end
 
-    -- Reset the button
     rollBtn.Text = "Roll Mutation"
     rollBtn.AutoButtonColor = true
     rollBtn.BackgroundColor3 = Color3.fromRGB(204, 102, 218)
