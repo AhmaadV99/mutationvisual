@@ -10,7 +10,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 -- 🎲 Weighted Mutation List
 local mutationChances = {
     {name = "Shiny", chance = 0.15},
-    {name = "Inverted", chance = 0.4},
+    {name = "Inverted", chance = 0.15},
     {name = "Windy", chance = 0.15},
     {name = "Frozen", chance = 0.1},
     {name = "Golden", chance = 0.1},
